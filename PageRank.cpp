@@ -85,15 +85,16 @@ int PageRank::chooseRandomNeighbor(int source_node, double random_number){
     std::vector<int> adj = g.getAdjacencyList(source_node);
 
     int walk_to_index = int(random_number * (adj.size() + 1));
-
+    int new_node = source_node;
     if(walk_to_index < adj.size()){
-        source_node = adj.at(walk_to_index);//Go to the node at the random index
+        new_node = adj.at(walk_to_index);//Go to the node at the random index
     } // If source is not updated, then we stay on current node
 
-    return source_node;
+    return new_node;
 }
 
-
+// Increment a counter for a node. Does not check if the node exists
+// in the graph or not.
 void PageRank::visitNode(int node){
     auto found = visit_counter.find(node);
     if(found == visit_counter.end())
@@ -108,6 +109,7 @@ void PageRank::visitNode(int node){
 
 void PageRank::RunTests(){
     this->TestVisitNode();
+    this->TestChooseRandomNeighbor();
 }
 
 void PageRank::TestVisitNode(){
@@ -115,12 +117,14 @@ void PageRank::TestVisitNode(){
     this->visitNode(2);
     this->visitNode(1);
     this->visitNode(1);
-    this->visitNode(50);
+    
 
     assert(visit_counter.find(4)->second == 1);
     assert(visit_counter.find(2)->second == 1);
-    assert(visit_counter.find(2)->second == 2);
+    assert(visit_counter.find(1)->second == 2);
     assert(visit_counter.find(50) == visit_counter.end());
+
+    std::cout << "Passed visit node tests \n";
 }
 
 void PageRank::TestChooseRandomNeighbor(){
@@ -145,7 +149,7 @@ void PageRank::TestChooseRandomNeighbor(){
         drand48_r(&drand_buffer, &random_number);
         
         //Visually inspect the output to check if its random
-        std::cout << this->chooseRandomNeighbor(source_node, random_number) << " ";
+        std::cout << this->chooseRandomNeighbor(source_node, random_number) << "  ";// << random_number;
         
     }
     
