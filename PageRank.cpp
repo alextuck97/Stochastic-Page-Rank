@@ -25,7 +25,7 @@ void PageRank::doPageRankEstimate(int threads){
 
     int n = nodes.size();//How many random walks we will do
     
-    #pragma omp for schedule(dynamic) shared(n, nodes, visit_counter) private(drand_buffer)
+    #pragma omp parallel for schedule(dynamic) shared(n, nodes)
     for(int i = 0; i < n; i++)
     {
         int source = nodes.at(i);

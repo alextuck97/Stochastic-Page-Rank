@@ -26,8 +26,8 @@ void Graph::readGraph(char * f){
                 std::string source = str.substr(0,tab);
                 std::string dest = str.substr(tab+1,tab+1 - nl);
                 //std::cout << "String: "<< source << " " << dest << std::endl;
-                int s = std::stoi(source);
-                int d = std::stoi(dest);
+                int s = stoi(source);
+                int d = stoi(dest);
                 auto itr = this->adjacency_table.find(s);
                 
                 if(itr != this->adjacency_table.end())

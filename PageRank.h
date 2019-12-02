@@ -41,6 +41,6 @@ private:
     int k; //Walk length
     int w; //walks
 
-}
+};
 
 #endif
