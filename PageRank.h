@@ -40,6 +40,7 @@ private:
     void TestVisitNode();
     void TestChooseRandomNeighbor();
     void TestTopKPages();
+    void TestThreadRandomness(int threads, int n);
 
     float d; //Damping
     int k; //Walk length

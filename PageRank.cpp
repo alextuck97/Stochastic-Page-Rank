@@ -142,6 +142,7 @@ void PageRank::RunTests(){
     this->TestVisitNode();
     this->TestChooseRandomNeighbor();
     this->TestTopKPages();
+    this->TestThreadRandomness(4, 12);
 }
 
 // Ensure visit counts are properly updated 
@@ -197,5 +198,39 @@ void PageRank::TestTopKPages(){
     std::cout << "\nTesting get top K pages \n";
     for(int i = 0; i < 5; i++){
         std::cout << topK.at(i).first << " Visits: " << topK.at(i).second << std::endl;
+    }
+}
+
+// Visually inspect that each thread produces unique values
+void PageRank::TestThreadRandomness(int threads, int n){
+    omp_set_num_threads(threads);
+
+    //Generate 10 sequences of random numbers
+   
+    #pragma omp parallel for schedule(dynamic) shared(n)
+    for(int i = 0; i < n; i++)
+    {
+        double random_number;
+        struct drand48_data drand_buffer;
+
+        // Seed a new random number generator for each walk
+        int seed = (omp_get_thread_num() + 1) * i + time(NULL);
+        srand48_r(seed, &drand_buffer);
+
+        double randos[5];
+        for(int j = 0; j < 5; j++){
+            drand48_r(&drand_buffer, &random_number);
+            randos[j] = random_number;
+        }
+        
+        #pragma omp critical
+        {
+            std::cout << "Thread " << omp_get_thread_num();
+            for(int k = 0; k < 5; k++)
+            {
+                std::cout << " " << randos[k] << " ";
+            }
+            std::cout << std::endl;
+        }
     }
 }
