@@ -36,7 +36,7 @@ void PageRank::doPageRankEstimate(int threads, int n = 0){
         struct drand48_data drand_buffer;
 
         // Seed a new random number generator for each walk
-        int seed = omp_get_thread_num() + i + time(NULL);
+        int seed = (omp_get_thread_num() + 1) * i + time(NULL);
         srand48_r(seed, &drand_buffer);
         
         //Check for existence of source in the map. Either add it to map or increment its visit count.
