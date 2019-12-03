@@ -17,18 +17,20 @@ PageRank::PageRank(char * f, float damping, int path_length){
     this->w = g.getNumNodes();
 }
 
-
-void PageRank::doPageRankEstimate(int threads){
+//
+void PageRank::doPageRankEstimate(int threads, int n = 0){
     
     std::vector<int> nodes = g.getNodes();
     omp_set_num_threads(threads);
-
-    int n = nodes.size();//How many random walks we will do
+    
+    //Default number of random walks is one for each node in the graph
+    if(n == 0)
+        n = nodes.size();
     
     #pragma omp parallel for schedule(dynamic) shared(n, nodes)
     for(int i = 0; i < n; i++)
     {
-        int source = nodes.at(i);
+        int source = nodes.at(i % nodes.size());
         
         double random_number;
         struct drand48_data drand_buffer;
@@ -39,7 +41,7 @@ void PageRank::doPageRankEstimate(int threads){
         
         //Check for existence of source in the map. Either add it to map or increment its visit count.
         #pragma  omp critical
-        visitNode(source);
+            visitNode(source);
 
         //Random walk of length k
         for(int j = 0; j < this->k; j++)
@@ -61,9 +63,6 @@ void PageRank::doPageRankEstimate(int threads){
                 visitNode(source);
         }
     }
-//TO DO: 1) make random numbers thread safe
-//       2) verify all Graph functions are thread safe
-//       3) get omp syntax right
 }
 
 
@@ -80,7 +79,8 @@ void PageRank::setGraph(char * f){
     this->g.readGraph(f);
 }
 
-
+// Randomly choose a neighbor of the source node
+// Thread safe, does not perform writes.
 int PageRank::chooseRandomNeighbor(int source_node, double random_number){
     std::vector<int> adj = g.getAdjacencyList(source_node);
 
@@ -94,7 +94,7 @@ int PageRank::chooseRandomNeighbor(int source_node, double random_number){
 }
 
 // Increment a counter for a node. Does not check if the node exists
-// in the graph or not.
+// in the graph or not. Must be sync'd.
 void PageRank::visitNode(int node){
     auto found = visit_counter.find(node);
     if(found == visit_counter.end())
@@ -106,12 +106,45 @@ void PageRank::visitNode(int node){
     }
 }
 
+// Return the k page-visit pairs with the highest visit counts
+std::vector<std::pair<int,int>> PageRank::getTopKPages(int k){
+    
+    std::vector<std::pair<int,int>> topK;
 
+    // Need a copy so when removing i-th largest value visit_counter is not modified
+    std::map<int,int> visit_counter_copy(visit_counter); 
+
+    for(int i = 0; i < k; i++){
+        std::pair<int,int> iLargest = std::make_pair(0,0);
+        
+        
+        for(auto it = visit_counter_copy.begin(); it != visit_counter_copy.end(); it++){
+            if(it->second > iLargest.second)
+            {
+                iLargest.first = it->first;
+                iLargest.second = it->second;
+            }
+        }
+        visit_counter_copy.erase(iLargest.first);
+        topK.push_back(iLargest);
+    }
+
+    return topK;
+}
+
+
+/****************************************
+
+PageRank class tests
+
+***************************************/
 void PageRank::RunTests(){
     this->TestVisitNode();
     this->TestChooseRandomNeighbor();
+    this->TestTopKPages();
 }
 
+// Ensure visit counts are properly updated 
 void PageRank::TestVisitNode(){
     this->visitNode(4);
     this->visitNode(2);
@@ -122,11 +155,14 @@ void PageRank::TestVisitNode(){
     assert(visit_counter.find(4)->second == 1);
     assert(visit_counter.find(2)->second == 1);
     assert(visit_counter.find(1)->second == 2);
+    // Node 50 does not exist
     assert(visit_counter.find(50) == visit_counter.end());
 
     std::cout << "Passed visit node tests \n";
 }
 
+// Simulate picking a random neighbor node.
+// Visually inspect the output to see if it looks random
 void PageRank::TestChooseRandomNeighbor(){
     
     struct drand48_data drand_buffer;
@@ -134,7 +170,6 @@ void PageRank::TestChooseRandomNeighbor(){
     srand48_r(seed, &drand_buffer);
 
     double random_number;
-
     int source_node = 0;
 
     for(int i = 0; i < 100; i++)
@@ -147,10 +182,20 @@ void PageRank::TestChooseRandomNeighbor(){
         }
 
         drand48_r(&drand_buffer, &random_number);
-        
-        //Visually inspect the output to check if its random
-        std::cout << this->chooseRandomNeighbor(source_node, random_number) << "  ";// << random_number;
-        
+        std::cout << this->chooseRandomNeighbor(source_node, random_number) << "  ";// << random_number;   
     }
-    
+}
+
+
+void PageRank::TestTopKPages(){
+    int threads = 4;
+    int walks = 200;
+
+    this->doPageRankEstimate(threads, walks);
+    std::vector<std::pair<int,int>> topK = this->getTopKPages(5);
+
+    std::cout << "\nTesting get top K pages \n";
+    for(int i = 0; i < 5; i++){
+        std::cout << topK.at(i).first << " Visits: " << topK.at(i).second << std::endl;
+    }
 }

@@ -18,12 +18,14 @@ public:
     PageRank(char * f, float damping, int walk_length);
     ~PageRank();
 
-    void doPageRankEstimate(int threads);
+    void doPageRankEstimate(int threads, int n);
 
     void setDamping(float d);
     void setWalkLength(int k);
     void setGraph(char * f);
 
+    std::vector<std::pair<int,int>> getTopKPages(int k);
+    
     void RunTests();
 
 private:
@@ -32,10 +34,12 @@ private:
     std::map<int,int> visit_counter;
 
     void visitNode(int node);
-    void TestVisitNode();
     
     int chooseRandomNeighbor(int source_node, double random_number);
+    
+    void TestVisitNode();
     void TestChooseRandomNeighbor();
+    void TestTopKPages();
 
     float d; //Damping
     int k; //Walk length
