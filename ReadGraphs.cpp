@@ -22,6 +22,11 @@ void Graph::readGraph(char * f){
             if(str.compare(0,1,"#") != 0 && str.compare(0,1,"\0") != 0)
             {   
                 std::size_t tab = str.find("\t");
+                
+                if(tab == std::string::npos){//Handle case of facebook graph
+                    tab = str.find(" ");
+                }
+
                 std::size_t nl = str.find("\n");
                 std::string source = str.substr(0,tab);
                 std::string dest = str.substr(tab+1,tab+1 - nl);
