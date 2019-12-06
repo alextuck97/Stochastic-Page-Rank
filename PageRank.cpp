@@ -29,7 +29,7 @@ void PageRank::doPageRankEstimate(int threads, int n){
     if(n == 0)
         n = nodes.size();
     
-    #pragma omp parallel for schedule(dynamic, 1000) shared(n, nodes)
+    #pragma omp parallel for schedule(dynamic, 500) shared(n, nodes)
     for(int i = 0; i < n; i++)
     {
         int source = nodes.at(i % nodes.size());//Cycle through nodes in case want to walk beyond the total number

@@ -49,6 +49,7 @@ void Graph::readGraph(char * f){
             }
         }
     }
+    in_file.close();
 }
 
 
@@ -112,7 +113,6 @@ int Graph::getRandomEdge(int source, double random){
     auto it = adjacency_table.find(source);
     
     if(it != adjacency_table.end()){
-    
         int walk_to_index = int(random * (it->second.size() + 1));
     
         if(walk_to_index < it->second.size()){
@@ -122,8 +122,8 @@ int Graph::getRandomEdge(int source, double random){
             return source;
         }
     }
-    else{
-        return 0;
+    else{// Node is a dead end, return itself
+        return source;
     }
 }
 
