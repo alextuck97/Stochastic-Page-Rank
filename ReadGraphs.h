@@ -6,6 +6,8 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include <unordered_map>
+#include <unordered_set>
 
 
 class Graph
@@ -16,7 +18,7 @@ public:
 
     void readGraph(char * f);
 
-    std::vector<int> getAdjacencyList(int node_name);
+    std::vector<int> & getAdjacencyList(int node_name);
 
     void printGraph();
 
@@ -26,9 +28,14 @@ public:
 
     std::vector<int> getNodes();
 
+    int getLargestNode();
+    int getRandomEdge(int source, double random);
+
+
 private:
     //std::vector<Node> adjacency_list;
-    std::map<int,std::vector<int> > adjacency_table;
+    //std::unordered_map<int,std::vector<int> > adjacency_table;
+    std::unordered_map<int,std::vector<int> > adjacency_table;
 };
 
 

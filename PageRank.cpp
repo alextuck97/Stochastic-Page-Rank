@@ -15,22 +15,32 @@ PageRank::PageRank(char * f, float damping, int path_length){
 
     this->g.readGraph(f);
     this->w = g.getNumNodes();
+
+    this->visits = new int[this->g.getLargestNode() + 1]();//Plus 1 for the case where the graph starts in node 1
+    //this->num_locks = w / 1000;
+    //this->locks = new omp_lock_t[w / 1000];
+    
 }
 
-//
-void PageRank::doPageRankEstimate(int threads, int n = 0){
+// Input: n, how many source nodes there are. Default is each node is a source.
+void PageRank::doPageRankEstimate(int threads, int n){
     
     std::vector<int> nodes = g.getNodes();
+    
     omp_set_num_threads(threads);
     
+    //for(int i = 0; i < num_locks; i++){
+    //    omp_init_lock(&locks[i]);
+    //}
+
     //Default number of random walks is one for each node in the graph
     if(n == 0)
         n = nodes.size();
     
-    #pragma omp parallel for schedule(dynamic) shared(n, nodes)
+    #pragma omp parallel for schedule(dynamic, 1000) shared(n, nodes)
     for(int i = 0; i < n; i++)
     {
-        int source = nodes.at(i % nodes.size());
+        int source = nodes.at(i % nodes.size());//Cycle through nodes in case want to walk beyond the total number
         
         double random_number;
         struct drand48_data drand_buffer;
@@ -40,10 +50,17 @@ void PageRank::doPageRankEstimate(int threads, int n = 0){
         srand48_r(seed, &drand_buffer);
         
         //Check for existence of source in the map. Either add it to map or increment its visit count.
-        #pragma  omp critical
-            visitNode(source);
-
+        //#pragma  omp critical
+        //{
+        //omp_set_lock(&locks[source / 1000]);
+        //    visitNode(source);
+        //omp_unset_lock(&locks[source / 1000]);
+        //}
         //Random walk of length k
+        //std::vector<int> walk;
+        #pragma omp atomic
+            visits[source]++;
+        //walk.push_back(source);
         for(int j = 0; j < this->k; j++)
         {
             //Generate random number for damping
@@ -56,13 +73,26 @@ void PageRank::doPageRankEstimate(int threads, int n = 0){
             }
             else{
                 drand48_r(&drand_buffer, &random_number);
-                source = chooseRandomNeighbor(source, random_number);
+                // = chooseRandomNeighbor(source, random_number);
+                source = g.getRandomEdge(source, random_number);
             }
-
-            #pragma omp critical
-                visitNode(source);
+            //walk.push_back(source);
+            #pragma omp atomic
+                visits[source]++;
+            //#pragma omp critical
+            //{//omp_set_lock(&locks[source / 1000]);
+            //    visitNode(source);
+            //}//omp_unset_lock(&locks[source / 1000]);
         }
+        //#pragma omp critical
+        //{
+        //    countWalk(walk);
+        //}
     }
+
+    //for(int i = 0; i < num_locks; i++){
+    //    omp_destroy_lock(&locks[i]);
+    //}
 }
 
 
@@ -106,26 +136,42 @@ void PageRank::visitNode(int node){
     }
 }
 
+//Scan through the nodes, pick the largest and smallest. Initialize an array of zeros with that size.
+//Then, only use atomic
+
+void PageRank::countWalk(std::vector<int> w){
+    for(auto it = w.begin(); it != w.end(); it++){
+        visitNode(*it);
+    }
+}
+
+void PageRank::lockAndVisit(int node){
+    int lock = node / 1000;
+
+}
+
+
 // Return the k page-visit pairs with the highest visit counts
 std::vector<std::pair<int,int>> PageRank::getTopKPages(int k){
     
     std::vector<std::pair<int,int>> topK;
 
-    // Need a copy so when removing i-th largest value visit_counter is not modified
-    std::map<int,int> visit_counter_copy(visit_counter); 
-
+    int range = g.getLargestNode() + 1;
+    
+    int prev_largest = INT_MAX;
     for(int i = 0; i < k; i++){
         std::pair<int,int> iLargest = std::make_pair(0,0);
         
         
-        for(auto it = visit_counter_copy.begin(); it != visit_counter_copy.end(); it++){
-            if(it->second > iLargest.second)
+        for(int j = 0; j < range; j++){
+            if(visits[j] > iLargest.second && visits[j] < prev_largest)
             {
-                iLargest.first = it->first;
-                iLargest.second = it->second;
+                iLargest.first = j;
+                iLargest.second = visits[j];
             }
         }
-        visit_counter_copy.erase(iLargest.first);
+        //visit_counter_copy.erase(iLargest.first);
+        prev_largest = iLargest.second;
         topK.push_back(iLargest);
     }
 
@@ -142,7 +188,7 @@ void PageRank::RunTests(){
     this->TestVisitNode();
     this->TestChooseRandomNeighbor();
     this->TestTopKPages();
-    this->TestThreadRandomness(4, 12);
+    //this->TestThreadRandomness(4, 12);
 }
 
 // Ensure visit counts are properly updated 
@@ -183,16 +229,17 @@ void PageRank::TestChooseRandomNeighbor(){
         }
 
         drand48_r(&drand_buffer, &random_number);
-        std::cout << this->chooseRandomNeighbor(source_node, random_number) << "  ";// << random_number;   
+        //std::cout << this->chooseRandomNeighbor(source_node, random_number) << "  ";// << random_number;  
+        std::cout << g.getRandomEdge(source_node, random_number) << "  ";
     }
 }
 
 
 void PageRank::TestTopKPages(){
-    int threads = 4;
+    omp_set_num_threads(4);
     int walks = 200;
 
-    this->doPageRankEstimate(threads, walks);
+    this->doPageRankEstimate(4);
     std::vector<std::pair<int,int>> topK = this->getTopKPages(5);
 
     std::cout << "\nTesting get top K pages \n";
