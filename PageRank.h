@@ -32,29 +32,15 @@ public:
 private:
 
     Graph g;
-    std::unordered_map<int,int> visit_counter;
 
-    void visitNode(int node);
-    
-    void lockAndVisit(int node);
-
-    void countWalk(std::vector<int> w);
-
-    int chooseRandomNeighbor(int source_node, double random_number);
-    
-    void TestVisitNode();
     void TestChooseRandomNeighbor();
     void TestTopKPages();
     void TestThreadRandomness(int threads, int n);
 
     float d; //Damping
     int k; //Walk length
-    int w; //walks
 
     int * visits;
-
-    omp_lock_t * locks;
-    int num_locks;
 
 };
 
