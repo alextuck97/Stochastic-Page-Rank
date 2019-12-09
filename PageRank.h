@@ -10,6 +10,11 @@
 #include <assert.h>
 #include <climits>
 
+/***************************
+ * PageRank class handles running the page rank estimate
+ *
+ **************************/
+
 class PageRank
 {
 

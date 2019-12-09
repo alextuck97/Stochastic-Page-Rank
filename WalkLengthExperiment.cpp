@@ -1,10 +1,12 @@
 #include "PageRank.h"
 
 /*********
+ * Time how long it takes to do PageRank on a graph given the arguments
  * Argument 1: The graph file
  *          2: Number of threads
  *          3: Damping factor
  *          4: Walk length
+ * Output: prints the walk length, damping factor, and time it took to run
  * *******/
 int main(int argc,char *argv[])
 {

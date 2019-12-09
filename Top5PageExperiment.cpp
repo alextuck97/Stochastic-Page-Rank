@@ -1,9 +1,13 @@
 #include "PageRank.h"
 
 /*********
+ * Estimate the top 5 ranked nodes in a graph
  * Argument 1: The graph file
  *          2: Damping factor
  *          3: Walk length
+ * 
+ * Output: The top 5 pages in the graph
+ * Runs on 8 threads
  * *******/
 int main(int argc,char *argv[])
 {

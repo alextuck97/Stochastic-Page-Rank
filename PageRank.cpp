@@ -18,7 +18,8 @@ PageRank::PageRank(char * f, float damping, int path_length){
     this->visits = new int[this->g.getLargestNode() + 1]();//Plus 1 for the case where the graph starts in node 1
 }
 
-// Input: n, how many source nodes there are. Default is each node is a source.
+// Input: threads: how many threads to run on
+//      n: how many source nodes there are. Default is each node is a source.
 void PageRank::doPageRankEstimate(int threads, int n){
     
     std::vector<int> nodes = g.getNodes();
@@ -56,6 +57,9 @@ void PageRank::doPageRankEstimate(int threads, int n){
             }
             else{
                 drand48_r(&drand_buffer, &random_number);
+                //Get a random adjacent node. May select itself.
+                //In the case there is no adjacent nodes, selects itself
+                //until the damping factor makes it jump to a random node.
                 source = g.getRandomEdge(source, random_number);
             }
             

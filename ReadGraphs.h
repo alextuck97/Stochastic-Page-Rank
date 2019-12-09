@@ -33,8 +33,7 @@ public:
 
 
 private:
-    //std::vector<Node> adjacency_list;
-    //std::unordered_map<int,std::vector<int> > adjacency_table;
+    
     std::unordered_map<int,std::vector<int> > adjacency_table;
 };
 
